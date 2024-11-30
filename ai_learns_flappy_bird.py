@@ -8,13 +8,15 @@ import neat
 import time
 import os
 import random
+
+# Initialize pygame
 pygame.init()
 pygame.font.init()
 
 # Set window dimensions
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
-
+GEN = 0 
 # Load and scale images for the game
 BIRD_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird1.png"))), pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird2.png"))), pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird3.png")))]
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
@@ -25,21 +27,22 @@ STAT_FONT = pygame.font.SysFont("comicsans", 50)
 
 # Bird class definition
 class Bird:
+     # Constants for bird behavior and animation
     IMGS = BIRD_IMGS
-    MAX_ROTATION = 25
-    ROT_VEL = 20
-    ANIMATION_TIME = 5
+    MAX_ROTATION = 25  # Maximum tilt of the bird
+    ROT_VEL = 20  # Rotation speed when tilting down
+    ANIMATION_TIME = 5  # Time each bird frame is displayed
 
     def __init__(self, x, y):
         # Initialize bird properties
         self.x = x
         self.y = y 
-        self.tilt = 0 
-        self.tick_count = 0
-        self.vel = 0 
-        self.height = self.y
-        self.img_count = 0 
-        self.img = self.IMGS[0]
+        self.tilt = 0 # Bird's angle of rotation
+        self.tick_count = 0  # Time since last jump
+        self.vel = 0  # Vertical velocity
+        self.height = self.y  # Height at the last jump
+        self.img_count = 0 # Current animation frame count
+        self.img = self.IMGS[0] # Current image for rendering
 
     def jump(self):
         # Set jump velocity and reset tick count
@@ -52,11 +55,13 @@ class Bird:
         self.tick_count += 1
         d = self.vel * self.tick_count + 1.5*self.tick_count**2
 
+        # Limit downward displacement to avoid excessive falling speed
         if d >= 16:
             d = 16
 
         if d < 0:
-            d -= 2
+            d -= 2 # Extra upward boost when moving upwards
+
         
         self.y = self.y + d
 
@@ -175,7 +180,7 @@ class Base:
         win.blit(self.IMG, (self.x1, self.y))
         win.blit(self.IMG, (self.x2, self.y))
 
-def draw_window(win, birds, pipes, base, score):
+def draw_window(win, birds, pipes, base, score, gen):
     # Draw game elements on the window
     win.blit(BG_IMG, (0,0))   
     for pipe in pipes:
@@ -184,12 +189,17 @@ def draw_window(win, birds, pipes, base, score):
     text = STAT_FONT.render("Score: " + str(score), 1, (255,255,255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
 
+    text = STAT_FONT.render("Gen: " + str(gen), 1, (255,255,255))
+    win.blit(text, (10, 10))
+
     base.draw(win)
     for bird in birds:
         bird.draw(win)
     pygame.display.update()
 
 def main(genomes, config):
+    global GEN
+    GEN += 1
     nets = []
     ge = []
     birds = []
@@ -272,10 +282,7 @@ def main(genomes, config):
 
         base.move()
 
-        draw_window(win, birds, pipes, base, score)
-    
-def eval_genomes(genomes, config):
-    main(genomes, config)
+        draw_window(win, birds, pipes, base, score, GEN)
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
@@ -286,7 +293,7 @@ def run(config_path):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    winner = p.run(eval_genomes, 50)
+    winner = p.run(main, 50)
 
 
 if __name__ == "__main__":
