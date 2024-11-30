@@ -202,7 +202,6 @@ def main(genomes, config):
         ge.append(g)
 
     # Main game loop
-    birds = Bird(230,350)
     base = Base(730)
     pipes = [Pipe(600)]
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -220,10 +219,10 @@ def main(genomes, config):
                 pygame.quit()
 
         pipe_ind = 0 
+        
         if len(birds) > 0:
-            if len(birds) > 0:
-                if len(pipes) > 1 and birds[0].x > pipes[0].x  + pipes[0].PIPE_TOP.get_width():
-                    pipe_ind = 1
+            if len(pipes) > 1 and birds[0].x > pipes[0].x  + pipes[0].PIPE_TOP.get_width():
+                pipe_ind = 1
         
         else:
             run = False
@@ -240,10 +239,10 @@ def main(genomes, config):
         add_pipe = False
         rem = []
         for pipe in pipes:
-            for bird in birds:
-                if pipe.collide(bird):
+            for x in reversed(range(len(birds))):
+                if pipes[0].collide(birds[x]):
                     ge[x].fitness -= 1
-                    bird.pop(x)
+                    birds.pop(x)
                     nets.pop(x)
                     ge.pop(x)
 
@@ -266,7 +265,7 @@ def main(genomes, config):
             pipes.remove(r)
 
         for x, bird in enumerate(birds):
-            if bird.y + bird.img.get_height() >= 730:
+            if bird.y < 0 or bird.y + bird.img.get_height() >= 730:
                 birds.pop(x)
                 nets.pop(x)
                 ge.pop(x)
@@ -275,6 +274,8 @@ def main(genomes, config):
 
         draw_window(win, birds, pipes, base, score)
     
+def eval_genomes(genomes, config):
+    main(genomes, config)
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
